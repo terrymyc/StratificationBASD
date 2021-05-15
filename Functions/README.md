@@ -1,10 +1,11 @@
 # Functions
 
-This folder contains R scripts with manually defined functions. All scripts except `Bayesian.R` are credited to Statistics Netherlands.
+This folder contains R scripts with manually defined functions. All scripts except `Bayesian.R` and `GibbsSampler.R` are credited to Statistics Netherlands.
 
 | Files              | Description |
 | ----               | ----        |
-| `Bayesian.R`       | Script for Gibbs sampler and to produce summary and diagnostic statistics |
+| `Bayesian.R`       | Script for Bayesian analysis summary and diagnostic statistics |
+| `GibbsSampler.R`       | Script for Gibbs sampler |
 | `KostenN.R`        | Script to extract survey cost variables |
 | `PasVarNamenAan.R` | Script to extract paradata obtained during the survey data collection |
 | `ReadGEZOfiles.R`  | Script to read the Dutch Health Survey data |
