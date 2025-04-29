@@ -3,32 +3,17 @@
 #
 # 5. Optimization of adaptive survey designs
 #
-#    (SECTION 5.4 & APPENDIX C in manuscript)
-#
-#    Updated on 10/05/2021
+#    Updated on 29/07/2021
 #
 ######################################################
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# This file optimizes the quality and cost indicators
-# as described in manuscript section 5.4.1.
+# This file optimizes the quality and cost indicators.
 
 # This file assesses the optimal designs based on
-# different stratification as described in manuscript 
-# section 5.4.2.
-
-# Table 3 and Figure 3 show optimal designs as described
-# in manuscript section 5.4.3
-
-# Figure C.3 in manuscript shows the trace plot of Gibbs draws
-# of stratification-assessed propensity model.
-
-# The optimization and assessment process in 5.1 & 5.2
-# are the same when other stratification applies, but
-# Table 3, Figure 3, and Figure C.3 are only built 
-# for ResponseY stratification.
+# different stratification.
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -37,17 +22,95 @@
 # 5.1 Optimize quality and cost indicators
 # ----------------------------------------------------------
 
-## evaluate the performance of all strategies
-solution.assess <- summaryIndicator(allocation = allocation.matrix, CV = samples$cv.response,
-                                    RR = samples$response.rate, RR.restraint = 0.5,
-                                    B = samples$budget, B.restraint = 42)
+## generate all possible allocations of strategies
+allocations.respY <- as.matrix(expand.grid(rep(list(1:3), length(unique(data2017$strata_respY)))))
+allocations.visitsY <- as.matrix(expand.grid(rep(list(1:3), length(unique(data2017$strata_visitsY)))))
+allocations.respX <- as.matrix(expand.grid(rep(list(1:3), length(unique(data2017$strata_respX)))))
+allocations.visitsX <- as.matrix(expand.grid(rep(list(1:3), length(unique(data2017$strata_visitsX)))))
+allocations.costX <- as.matrix(expand.grid(rep(list(1:3), length(unique(data2017$strata_costX)))))
+
+## posterior distribution of quality and cost indicators
+n.iter <- 1000
+n.burn <- 500
+
+system.time(indicators.respY <- IndicatorsEst(data = data2017,
+                                              strata = data2017$strata_respY,
+                                              allocation = allocations.respY,
+                                              n.iter = n.iter, n.burn = n.burn))
+system.time(indicators.visitsY <- IndicatorsEst(data = data2017,
+                                                strata = data2017$strata_visitsY,
+                                                allocation = allocations.visitsY,
+                                                n.iter = n.iter, n.burn = n.burn))
+system.time(indicators.respX <- IndicatorsEst(data = data2017,
+                                              strata = data2017$strata_respX,
+                                              allocation = allocations.respX,
+                                              n.iter = n.iter, n.burn = n.burn))
+system.time(indicators.visitsX <- IndicatorsEst(data = data2017,
+                                                strata = data2017$strata_visitsX,
+                                                allocation = allocations.visitsX,
+                                                n.iter = n.iter, n.burn = n.burn))
+system.time(indicators.costX <- IndicatorsEst(data = data2017,
+                                              strata = data2017$strata_costX,
+                                              allocation = allocations.costX,
+                                              n.iter = n.iter, n.burn = n.burn))
+
+## set constraints for quality and cost indicators
+realized.B <- sum(data2017$kostenTotaalCAWICAPI)/nrow(data2017)/mean(data2017$FinalRespPhase3)
+RR.constraint <- 0.5
+B.constraint <- realized.B
+
+solutions.eva.respY <- summaryIndicator(allocation = allocations.respY, 
+                                        CV = indicators.respY$CV,
+                                        RR = indicators.respY$RR, RR.constraint = RR.constraint,
+                                        B = indicators.respY$B, B.constraint = B.constraint)
+solutions.eva.visitsY <- summaryIndicator(allocation = allocations.visitsY, 
+                                          CV = indicators.visitsY$CV,
+                                          RR = indicators.visitsY$RR, RR.constraint = RR.constraint,
+                                          B = indicators.visitsY$B, B.constraint = B.constraint)
+solutions.eva.respX <- summaryIndicator(allocation = allocations.respX,
+                                        CV = indicators.respX$CV,
+                                        RR = indicators.respX$RR, RR.constraint = RR.constraint,
+                                        B = indicators.respX$B, B.constraint = B.constraint)
+solutions.eva.visitsX <- summaryIndicator(allocation = allocations.visitsX, 
+                                          CV = indicators.visitsX$CV,
+                                          RR = indicators.visitsX$RR, RR.constraint = RR.constraint,
+                                          B = indicators.visitsX$B, B.constraint = B.constraint)
+solutions.eva.costX <- summaryIndicator(allocation = allocations.costX,
+                                        CV = indicators.costX$CV,
+                                        RR = indicators.costX$RR, RR.constraint = RR.constraint,
+                                        B = indicators.costX$B, B.constraint = B.constraint)
 
 ## optimization based on RESPONSE RATES and COST per respondent
-optimized <- solution.assess$statistics[solution.assess$statistics[, "RR"] >= 0.5 &
-                                        solution.assess$statistics[, "B.restraint"] < 0.1, ]
+## filter solutions subject to constraints
+optimized.respY <- solutions.eva.respY$statistics[solutions.eva.respY$statistics[, "RR"] >= RR.constraint &
+                                                  solutions.eva.respY$statistics[, "B.constraint"] < 0.1, ]
+optimized.visitsY <- solutions.eva.visitsY$statistics[solutions.eva.visitsY$statistics[, "RR"] >= RR.constraint &
+                                                      solutions.eva.visitsY$statistics[, "B.constraint"] < 0.1, ]
+optimized.respX <- solutions.eva.respX$statistics[solutions.eva.respX$statistics[, "RR"] >= RR.constraint &
+                                                  solutions.eva.respX$statistics[, "B.constraint"] < 0.1, ]
+optimized.visitsX <- solutions.eva.visitsX$statistics[solutions.eva.visitsX$statistics[, "RR"] >= RR.constraint &
+                                                      solutions.eva.visitsX$statistics[, "B.constraint"] < 0.1, ]
+optimized.costX <- solutions.eva.costX$statistics[solutions.eva.costX$statistics[, "RR"] >= RR.constraint &
+                                                  solutions.eva.costX$statistics[, "B.constraint"] < 0.1, ]
 
-## extract optimal design solutions
-optimal.allocation <- unname(optimized[order(optimized[, "CV"]),][1:5, 1:ncol(allocation.matrix)])
+## order solutions by CV
+optimized.respY <- optimized.respY[order(optimized.respY[, "CV"]), ]
+optimized.visitsY <- optimized.visitsY[order(optimized.visitsY[, "CV"]), ]
+optimized.respX <- optimized.respX[order(optimized.respX[, "CV"]), ]
+optimized.visitsX <- optimized.visitsX[order(optimized.visitsX[, "CV"]), ]
+optimized.costX <- optimized.costX[order(optimized.costX[, "CV"]), ]
+
+## extract top 5 optimal design solutions
+optimal.respY <- unname(optimized.respY[1:5, 1:ncol(allocations.respY)])
+optimal.visitsY <- unname(optimized.visitsY[1:5, 1:ncol(allocations.visitsY)])
+optimal.respX <- unname(optimized.respX[1:5, 1:ncol(allocations.respX)])
+optimal.visitsX <- unname(optimized.visitsX[1:5, 1:ncol(allocations.visitsX)])
+optimal.costX <- unname(optimized.costX[1:5, 1:ncol(allocations.costX)])
+
+## extract CV, RR, B of top 100 solutions for figure 3
+optimal.respY.top100 <- data.frame(optimized.respY[1:100, c("CV", "CV.025", "CV.975", "RR", "B")])
+optimal.visitsY.top100 <- data.frame(optimized.visitsY[1:100, c("CV", "CV.025", "CV.975", "RR", "B")])
+
 
 
 # ----------------------------------------------------------
@@ -55,110 +118,65 @@ optimal.allocation <- unname(optimized[order(optimized[, "CV"]),][1:5, 1:ncol(al
 # ----------------------------------------------------------
 
 ## Evaluate posteriors of optimal design solutions based on CV criterion
-set.seed(123)
-eva.samples <- GibbsOptimal(data = data2017, allocation = optimal.allocation,
-                            n.iter = 5000, n.burn = 1000)
+stratification.eva.respY <- AssessStratification(data = data2017,
+                                                 strata = data2017$strata_respY,
+                                                 allocation = optimal.respY,
+                                                 n.iter = 1000, n.burn = 500)
+stratification.eva.visitsY <- AssessStratification(data = data2017,
+                                                   strata = data2017$strata_visitsY,
+                                                   allocation = optimal.visitsY,
+                                                   n.iter = 1000, n.burn = 500)
+stratification.eva.respX <- AssessStratification(data = data2017,
+                                                 strata = data2017$strata_respX,
+                                                 allocation = optimal.respX,
+                                                 n.iter = 1000, n.burn = 500)
+stratification.eva.visitsX <- AssessStratification(data = data2017,
+                                                   strata = data2017$strata_visitsX,
+                                                   allocation = optimal.visitsX,
+                                                   n.iter = 1000, n.burn = 500)
+stratification.eva.costX <- AssessStratification(data = data2017,
+                                                 strata = data2017$strata_costX,
+                                                 allocation = optimal.costX,
+                                                 n.iter = 1000, n.burn = 500)
+
+## run two chains for figure 3
+stratification.eva.respY.2chains <- AssessStratification(data = data2017,
+                                                         strata = data2017$strata_respY,
+                                                         allocation = optimal.respY,
+                                                         n.iter = 5000, n.burn = 1000, n.chain = 2)
+stratification.eva.visitsY.2chains <- AssessStratification(data = data2017,
+                                                           strata = data2017$strata_visitsY,
+                                                           allocation = optimal.visitsY,
+                                                           n.iter = 5000, n.burn = 1000, n.chain = 2)
 
 ## Extract CV
-if (ncol(optimal.allocation) == 9) {
-  CV <- matrix(c(rep("Optimal", 5), 
-                 "Design1", "Design2", "Design3", "Design4", "Design5", 
-                 rep(NA, 15)), 
-               ncol = 5)
-} else if (ncol(optimal.allocation) == 10) {
-  CV <- matrix(c(rep("ResponseX", 5), 
-                 "Design1", "Design2", "Design3", "Design4", "Design5", 
-                 rep(NA, 15)), 
-               ncol = 5)
-} else {
-  CV <- matrix(c(rep("CostX", 5), 
-                 "Design1", "Design2", "Design3", "Design4", "Design5", 
-                 rep(NA, 15)), 
-               ncol = 5)
-}
-colnames(CV) <- c("Method", "Design", "CV", "lower", "upper")
+Design <- c("Design1", "Design2", "Design3", "Design4", "Design5")
+CV.respY <- matrix(c(rep("ResponseY", 5), Design, rep(NA, 15)), ncol = 5)
+CV.visitsY <- matrix(c(rep("VisitsY", 5), Design, rep(NA, 15)), ncol = 5)
+CV.respX <- matrix(c(rep("ResponseX", 5), Design, rep(NA, 15)), ncol = 5)
+CV.visitsX <- matrix(c(rep("VisitsX", 5), Design, rep(NA, 15)), ncol = 5)
+CV.costX <- matrix(c(rep("CostX", 5), Design, rep(NA, 15)), ncol = 5)
 
-for (i in 1:5) {
-  CV[i, 3] <- summaryOptimalDesigns(eva.samples[[i]])$statistics["CV", "Mean"]
-  CV[i, 4:5] <- summaryOptimalDesigns(eva.samples[[i]])$quantiles["CV", c("2.5%", "97.5%")]
-}
+colnames(CV.respY) <- c("Method", "Design", "CV", "lower", "upper")
+colnames(CV.visitsY) <- c("Method", "Design", "CV", "lower", "upper")
+colnames(CV.respX) <- c("Method", "Design", "CV", "lower", "upper")
+colnames(CV.visitsX) <- c("Method", "Design", "CV", "lower", "upper")
+colnames(CV.costX) <- c("Method", "Design", "CV", "lower", "upper")
 
-write.csv(CV, paste0("Output/", ncol(optimal.allocation), "StrataOptimalDesigns.csv"))
+CV.respY[, 3] <- round(apply(stratification.eva.respY$CV, 2, mean), digits = 5)
+CV.visitsY[, 3] <- round(apply(stratification.eva.visitsY$CV, 2, mean), digits = 5)
+CV.respX[, 3] <- round(apply(stratification.eva.respX$CV, 2, mean), digits = 5)
+CV.visitsX[, 3] <- round(apply(stratification.eva.visitsX$CV, 2, mean), digits = 5)
+CV.costX[, 3] <- round(apply(stratification.eva.costX$CV, 2, mean), digits = 5)
 
+CV.respY[, 4:5] <- round(t(apply(stratification.eva.respY$CV, 2, quantile, probs = c(0.025, 0.975))), digits = 5)
+CV.visitsY[, 4:5] <- round(t(apply(stratification.eva.visitsY$CV, 2, quantile, probs = c(0.025, 0.975))), digits = 5)
+CV.respX[, 4:5] <- round(t(apply(stratification.eva.respX$CV, 2, quantile, probs = c(0.025, 0.975))), digits = 5)
+CV.visitsX[, 4:5] <- round(t(apply(stratification.eva.visitsX$CV, 2, quantile, probs = c(0.025, 0.975))), digits = 5)
+CV.costX[, 4:5] <- round(t(apply(stratification.eva.costX$CV, 2, quantile, probs = c(0.025, 0.975))), digits = 5)
 
-if (length(unique(data2017$strata)) == 9) {
-# ----------------------------------------------------------
-# 5.3 Table 3
-#     ONLY run when ResponseY stratification applies
-# ----------------------------------------------------------
+CV <- data.frame(rbind(CV.respY, CV.visitsY, CV.respX, CV.visitsX, CV.costX))
+CV$CV <- as.numeric(CV$CV)
+CV$lower <- as.numeric(CV$lower)
+CV$upper <- as.numeric(CV$upper)
 
-Table3 <- file("Tables/Table3.txt")
-sink(Table3, type = "output")
-print(optimized[order(optimized[, "CV"]),][1:5, ])
-sink()
-close(Table3)
-
-
-# ----------------------------------------------------------
-# 5.4 Figure 3
-#     ONLY run when ResponseY stratification applies
-# ----------------------------------------------------------
-
-# prepare data
-opt.design <- data.frame(optimized[order(optimized[, "CV"]), ][1:150, c("CV", "CV.025", "CV.975", "RR", "B")])
-opt.design.highlight <- opt.design[1:5, ]
-
-png("Figures/Figure3a.png", width = 8, height = 7, units = "in", res = 600)
-
-# plot against budget
-ggplot(opt.design, aes(B, CV)) +
-  geom_pointrange(aes(ymin = CV.025, ymax = CV.975), alpha = 0.3) +
-  geom_pointrange(data = opt.design.highlight,
-                  aes(ymin = CV.025, ymax = CV.975),
-                  color = "red") +
-  labs(x = TeX("Expectation of budget per respondent, $E\\left(B\\left(C(s_{\\phi}),\\rho_y(s_{\\phi})\\right)\\right)$"),
-       y = TeX("Expectation of CV of response propensities, $E\\left(CV\\left(\\rho_y(s_{\\phi})\\right)\\right)$")) +
-  theme_light()
-
-dev.off()
-
-png("Figures/Figure3b.png", width = 8, height = 7, units = "in", res = 600)
-
-# plot against response rate
-ggplot(opt.design, aes(RR, CV)) +
-  geom_pointrange(aes(ymin = CV.025, ymax = CV.975), alpha = 0.3) +
-  geom_pointrange(data = opt.design.highlight,
-                  aes(ymin = CV.025, ymax = CV.975),
-                  color = "red") +
-  labs(x = TeX("Expectation of response rate, $E\\left(RR(\\rho_y(s_{\\phi}))\\right)$"),
-       y = TeX("Expectation of CV of response propensities, $E\\left(CV\\left(\\rho_y(s_{\\phi})\\right)\\right)$")) +
-  theme_light()
-
-dev.off()
-
-
-# ------------------------------------------------------------
-# 5.5 Figure C.3 Stratification-assessed propensity model parameters
-#     ONLY run when ResponseY stratification applies
-# ------------------------------------------------------------
-
-## Evaluate posteriors of optimal design solutions based on CV criterion
-## run two chains
-set.seed(123)
-eva.samples.2c <- GibbsOptimal(data = data2017, allocation = optimal.allocation,
-                            n.iter = 5000, n.burn = 1000, n.chain = 2)
-
-png("Figures/FigureC3.png", width = 8, height = 9, units = "in", res = 400)
-
-TracePlotCrit(eva.samples.2c)
-
-dev.off()
-
-}
-
-
-# ------------------------------------------------------------
-# 5.6 Remove strata indicator variable from data
-# ------------------------------------------------------------
-
-data2017 <- within(data2017, rm(strata))

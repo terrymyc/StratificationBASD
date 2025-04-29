@@ -3,8 +3,6 @@
 #
 # 1. Read & Recode Raw Data
 #
-#    (SECTION 5.1 & 5.2 in manuscript)
-#
 #    Updated on 10/05/2021
 #
 ######################################################

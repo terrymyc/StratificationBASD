@@ -11,25 +11,21 @@ The published version will appear in *Sociological Methods & Research*.
 | `1.ReadRecodeRawData.R`   | Script to read the raw micro data and recode into analysis data |
 | `2.BayesModelSvyVar.R`     | Script to predict key survey variables |
 | `3.1 StratificationResponseY.R`  | Script to perform ResponseY stratification method |
-| `3.2 StratificationResponseX.R`  | Script to perform ResponseX stratification method |
-| `3.3 StratificationCostX.R`  | Script to perform CostX stratification method |
+| `3.2 StratificationVisitsY.R`  | Script to perform VisitY stratification method |
+| `3.3 StratificationResponseX.R`  | Script to perform ResponseX stratification method |
+| `3.4 StratificationVisitsX.R`  | Script to perform VisitX stratification method |
+| `3.5 StratificationCostX.R`  | Script to perform CostX stratification method |
 | `4.DesignPara.R`      | Script to perform Bayesian analysis of survey design parameters |
 | `5.Optimization.R`    | Script to perform mathematical optimization of adaptive survey designs |
-| `6.OptimalStratification.R`    | Script to determine optimal stratification |
-| `EthicalApproval.pdf` | Proof of ethical clearance by the FETC (Utrecht University) |
+| `6.Sensitivity.R`    | Script to perform sensitivity analysis |
+| `Tables.R`         | Script to reproduce Tables |
+| `Figures.R`         | Script to reproduce Figures |
 | `Functions`          | Folders containing the functions used by `0.Execute.R` |
-| `Manuscript`         | Folders containing the manuscript written in LaTeX |
-| `Tables`         | Folders containing the generated Table data in the manuscript |
-| `Figures`         | Folders containing the generated Figures in the manuscript |
-| `Output`         | Folders containing the aggregated data used by `6.OptimalStratification.R` |
-
 
 ## Privacy
 
 The micro data collected between 04/2017 and 03/2018 by Statistics Netherlands (CBS) are secure use files and are only available via on-site access.
 This research archive is also permanently stored on the CBS server with the internal path `//cbsp.nl/Productie/Primair/PDCA-SEC/Beheer/StratificationBASD`.
-
-The study has been approved by the Ethics Committee of the Faculty of Social and Behavioural Sciences (FETC) of Utrecht University, filed as an amendment under study 20-0104.
 
 ## Contact
 
