@@ -18,8 +18,8 @@ The published version will appear in *Sociological Methods & Research*.
 | `4.DesignPara.R`      | Script to perform Bayesian analysis of survey design parameters |
 | `5.Optimization.R`    | Script to perform mathematical optimization of adaptive survey designs |
 | `6.Sensitivity.R`    | Script to perform sensitivity analysis |
-| `Tables.R`         | Script to reproduce Tables |
-| `Figures.R`         | Script to reproduce Figures |
+| `Tables.R`         | Script to reproduce tables |
+| `Figures.R`         | Script to reproduce figures |
 | `Functions`          | Folders containing the functions used by `0.Execute.R` |
 
 ## Privacy

@@ -1,11 +1,12 @@
 # Functions
 
-This folder contains R scripts with manually defined functions. All scripts except `Bayesian.R` and `GibbsSampler.R` are credited to Statistics Netherlands.
+This folder contains R scripts with manually defined functions. All scripts except `FiguresGenerator.R`, `GibbsSampler(MCMCpack).R`, and `GibbsSampleSummary.R` are credited to Statistics Netherlands.
 
 | Files              | Description |
 | ----               | ----        |
-| `Bayesian.R`       | Script for Bayesian analysis summary and diagnostic statistics |
-| `GibbsSampler.R`       | Script for Gibbs sampler |
+| `FiguresGenerator.R` | Script to generate figures |
+| `GibbsSampler(MCMCpack).R`       | Script for Gibbs sampler |
+| `GibbsSampleSummary.R`       | Script for Bayesian analysis summary and diagnostic statistics |
 | `KostenN.R`        | Script to extract survey cost variables |
 | `PasVarNamenAan.R` | Script to extract paradata obtained during the survey data collection |
 | `ReadGEZOfiles.R`  | Script to read the Dutch Health Survey data |
